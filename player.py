@@ -30,7 +30,14 @@ class Player(pygame.sprite.Sprite):
         self.health = settings.PLAYER_HEALTH
         self.checkpoint = None
 
+        # 이전 위치 추적
+        self.prev_rect = self.rect.copy()
+
     def update(self, platforms, enemies, jump_sound):
+        # 이전 위치 저장 (이동하기 전에 저장)
+        self.prev_rect = self.rect.copy()
+
+        
         keys = pygame.key.get_pressed()
         self.vel.x = 0
         gravity_direction = self.gravity_manager.current_gravity

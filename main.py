@@ -13,6 +13,7 @@ from flag import Flag
 from heart import Heart
 from platform import Platform
 from star import Star
+from blood_effect import BloodEffect
 
 import settings
 
@@ -24,6 +25,8 @@ pygame.display.set_caption("Project2_2022105744_정유성")
 clock = pygame.time.Clock()
 font = pygame.font.SysFont('Arial', 24)
 jump_sound = pygame.mixer.Sound('assets/sounds/jump.wav')
+stomp_sound = pygame.mixer.Sound('assets/sounds/stomp.wav')  
+
 # 보스방에서 사용할 변수 초기화
 star_spawn_timer = pygame.time.get_ticks()
 STAR_SPAWN_INTERVAL = 5000  # 5초마다 스타 생성
@@ -145,10 +148,11 @@ all_sprites = pygame.sprite.Group()
 all_sprites.add(current_level.platforms, current_level.enemies, current_level.enemies_type2,
                 current_level.items, current_level.puzzles, current_level.traps, player)
 
-
 def reset_game(start_from_boss=False):
     # 게임 초기화 함수
     global current_level, player, camera, all_sprites, game_over, is_boss_level_active
+    global current_level_index, current_level_data
+
     current_level_index = 1 if start_from_boss else 0
     current_level_data = level_data_list[current_level_index]
     current_level = Level(current_level_data, gravity_manager)
@@ -160,7 +164,7 @@ def reset_game(start_from_boss=False):
     camera = Camera(settings.MAP_WIDTH, settings.MAP_HEIGHT)
     camera.fixed_position = None  # 카메라 고정 해제
     
-    # 여기에서 all_sprites를 생성합니다.
+    # all_sprites를 새로 생성
     all_sprites = pygame.sprite.Group()
     
     all_sprites.add(current_level.platforms.sprites())
@@ -205,7 +209,6 @@ def reset_game(start_from_boss=False):
         is_boss_level_active = False
 
 
-
 # 초기 게임 상태 설정
 reset_game()
 checkpoint_position = (900, 200)
@@ -216,9 +219,6 @@ ENEMY_SPAWN_INTERVAL = 5000
 ENEMY_SPAWN_RADIUS = 300
 running = True
 game_over = False
-
-
-
 
 
 def show_countdown():
@@ -282,8 +282,16 @@ def draw_boss_health_bar(screen, boss, font):
     # 현재 체력에 따른 채워진 바의 너비 계산
     current_bar_width = int(bar_width * (boss_health / boss_max_health))
 
-    # 채워진 바 그리기 (녹색)
-    pygame.draw.rect(screen, settings.BOSS_HEALTH_BAR_FG_COLOR, (x, y, current_bar_width, bar_height))
+    # 체력 비율에 따른 색상 변화
+    if boss_health > boss_max_health * 0.6:
+        bar_color = settings.BOSS_HEALTH_BAR_FG_COLOR  # 녹색
+    elif boss_health > boss_max_health * 0.3:
+        bar_color = (255, 255, 0)  # 노란색
+    else:
+        bar_color = (255, 0, 0)  # 빨간색
+
+    # 채워진 바 그리기 (녹색/노란색/빨간색)
+    pygame.draw.rect(screen, bar_color, (x, y, current_bar_width, bar_height))
 
     # 보스 체력 텍스트 표시
     health_text = font.render(f'Boss Health: {boss_health}/{boss_max_health}', True, settings.BOSS_HEALTH_TEXT_COLOR)
@@ -327,8 +335,6 @@ def transition_to_boss_level():
     star_spawn_timer = pygame.time.get_ticks()  # 스타 스폰 타이머 초기화
 
 
-
-
 # 메인 루프
 show_countdown()
 
@@ -344,6 +350,7 @@ try:
             else:
                 running = False
                 break
+
         current_time = pygame.time.get_ticks()
         clock.tick(settings.FPS)
 
@@ -365,7 +372,6 @@ try:
                     new_enemy = EnemyType2(spawn_x, spawn_y, gravity_manager)
                     current_level.enemies_type2.add(new_enemy)
                 all_sprites.add(new_enemy)
-
 
         if is_boss_level_active:
             # 스타 스프라이트 주기적으로 생성
@@ -419,8 +425,6 @@ try:
             player.health = min(player.health + 1, settings.PLAYER_HEALTH)
 
 
-
-
         # 충돌 처리
         if current_level.flag and pygame.sprite.collide_rect(player, current_level.flag):
             print("Congratulations! You reached the flag!")
@@ -449,6 +453,35 @@ try:
                 current_level.boss.health -= 30
                 current_level.boss.is_stunned = True
                 current_level.boss.stun_timer = pygame.time.get_ticks()
+
+             # 보스와 플레이어의 충돌 처리
+            if pygame.sprite.collide_rect(player, current_level.boss):
+                # 플레이어가 보스를 밟았는지 확인
+                if (player.vel.y > 0) and (player.prev_rect.bottom <= current_level.boss.rect.top):
+                    # 플레이어가 보스를 밟음
+                    current_level.boss.health -= settings.BOSS_STOMP_DAMAGE  # 설정 파일에서 정의한 값 사용
+                    current_level.boss.is_stunned = True
+                    current_level.boss.stun_timer = pygame.time.get_ticks()
+
+                    # 피 효과 추가
+                    blood = BloodEffect(current_level.boss.rect.centerx, current_level.boss.rect.top)
+                    all_sprites.add(blood)
+
+                    # 플레이어 점프 (보스 밟은 후 반동 효과)
+                    player.vel.y = -player.jump_strength / 2  # 반동 높이 조절
+
+                    #소리 효과 추가
+                    stomp_sound.play()
+
+                    # 보스 체력이 0 이하이면 보스 제거
+                    if current_level.boss.health <= 0:
+                        current_level.boss.kill()
+                        current_level.boss = None
+                else:
+                    # 보스와의 일반적인 충돌 (플레이어 체력 감소)
+                    player.health -= 1
+                    if player.health <= 0:
+                        game_over = True
 
             hits = pygame.sprite.spritecollide(
                 player,
@@ -513,8 +546,6 @@ try:
                 new_enemy = EnemyType2(spawn_x, spawn_y, gravity_manager)
                 current_level.enemies_type2.add(new_enemy)
             all_sprites.add(new_enemy)
-
-
         
         # all_sprites 그리기 전에 스타 스프라이트 업데이트
         current_level.stars.update()

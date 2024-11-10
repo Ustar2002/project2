@@ -52,6 +52,11 @@ UPPER_LIMIT = -200
 # 카메라 설정
 CAMERA_SCROLL_SPEED = 1
 
+# 보스 스텀프 관련 설정
+BOSS_STUN_DURATION = 2000        # 보스가 경직 상태로 있는 시간 (밀리초)
+BOSS_STOMP_DAMAGE = 10            # 보스를 밟았을 때 감소하는 체력
+BLOOD_EFFECT_DURATION = 500       # 피 효과 지속 시간 (밀리초)
+
 # 보스 체력 바 설정
 BOSS_HEALTH_BAR_WIDTH = 200
 BOSS_HEALTH_BAR_HEIGHT = 20

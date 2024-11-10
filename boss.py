@@ -52,8 +52,13 @@ class Boss(pygame.sprite.Sprite):
             self.rect.y += int(dy / distance * self.speed)
 
     def attack_pattern(self, player, current_time):
-        # 일정 시간마다 플레이어를 향해 투사체 발사
-        if current_time - self.attack_timer > 1000:
+        # 보스 체력에 따라 공격 패턴 변화
+        if self.health > settings.BOSS_HEALTH * 0.5:
+            attack_interval = 1000  # 1초마다 공격
+        else:
+            attack_interval = 700   # 0.7초마다 공격
+
+        if current_time - self.attack_timer > attack_interval:
             self.attack_timer = current_time
             dx = player.rect.centerx - self.rect.centerx
             dy = player.rect.centery - self.rect.centery
