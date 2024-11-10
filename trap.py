@@ -1,5 +1,3 @@
-# trap.py
-
 import pygame
 import settings
 

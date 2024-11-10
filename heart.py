@@ -1,5 +1,3 @@
-# heart.py
-
 import pygame
 import settings
 

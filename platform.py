@@ -1,5 +1,3 @@
-# platform.py
-
 import pygame
 import settings
 import random

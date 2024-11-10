@@ -17,20 +17,6 @@ class Star(pygame.sprite.Sprite):
         self.image = pygame.transform.scale(original_image, (30, 30))
         self.rect = self.image.get_rect(center=(x, y))
 
-        # 스타의 초기 속도
-        self.vel = pygame.math.Vector2(0, 0)
-        
-        # 중력 매니저 참조
-        self.gravity_manager = gravity_manager
-
     def update(self):
-        # 중력 적용
-        if self.apply_gravity:
-            self.vel += self.gravity_manager.gravity_vector()
-        # 위치 업데이트
-        self.rect.x += int(self.vel.x)
-        self.rect.y += int(self.vel.y)
-        # 화면 밖으로 나가면 제거
-        if (self.rect.right < 0 or self.rect.left > settings.MAP_WIDTH or
-            self.rect.bottom < 0 or self.rect.top > settings.MAP_HEIGHT):
-            self.kill()
+        # 스타는 기본적으로 움직이지 않으므로 업데이트 로직이 필요 없습니다.
+        pass

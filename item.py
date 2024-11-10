@@ -1,5 +1,3 @@
-# item.py
-
 import pygame
 import settings
 
@@ -14,4 +12,3 @@ class Item(pygame.sprite.Sprite):
             original_image.fill(settings.BLUE)
         self.image = pygame.transform.scale(original_image, (30, 30))
         self.rect = self.image.get_rect(center=(x, y))
-

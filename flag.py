@@ -1,5 +1,3 @@
-# flag.py
-
 import pygame
 import settings
 
@@ -14,4 +12,3 @@ class Flag(pygame.sprite.Sprite):
             original_image.fill(settings.YELLOW)
         self.image = pygame.transform.scale(original_image, (40, 80))
         self.rect = self.image.get_rect(center=(x, y))
-

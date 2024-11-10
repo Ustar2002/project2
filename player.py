@@ -1,5 +1,3 @@
-# player.py
-
 import pygame
 import settings
 
@@ -20,7 +18,7 @@ class Player(pygame.sprite.Sprite):
         initial_platform = settings.INITIAL_PLATFORM_POSITION
         self.rect.centerx = initial_platform[0] + initial_platform[2] // 2
         self.rect.bottom = initial_platform[1]
-        
+
         # 플레이어 속성 초기화
         self.gravity_manager = gravity_manager
         self.vel = pygame.math.Vector2(0, 0)
@@ -33,10 +31,9 @@ class Player(pygame.sprite.Sprite):
     def update(self, platforms, enemies, jump_sound):
         keys = pygame.key.get_pressed()
         self.vel.x = 0
-        self.vel.y = 0 
         gravity_direction = self.gravity_manager.current_gravity
 
-        # 중력 방향에 따른 방향키 설정
+        # 중력 방향에 따른 이동 처리
         if gravity_direction == 'down':
             if keys[pygame.K_a]:
                 self.vel.x = -self.speed
@@ -58,11 +55,7 @@ class Player(pygame.sprite.Sprite):
             if keys[pygame.K_d]:
                 self.vel.y = self.speed
 
-        # Star 발사 처리 (예: F 키)
-        if keys[pygame.K_f]:
-            self.launch_star()
-
-        # 점프 입력 처리
+        # 점프 처리
         if (keys[pygame.K_SPACE] or keys[pygame.K_w]) and self.on_ground:
             self.vel += self.gravity_manager.jump_vector(self.jump_strength)
             self.on_ground = False
@@ -71,7 +64,7 @@ class Player(pygame.sprite.Sprite):
         # 중력 적용
         self.vel += self.gravity_manager.gravity_vector()
 
-        # 나머지 이동 및 충돌 처리
+        # 위치 업데이트 및 충돌 처리
         self.rect.x += self.vel.x
         self.collide(platforms, 'x')
         self.rect.y += self.vel.y
@@ -86,15 +79,8 @@ class Player(pygame.sprite.Sprite):
             else:
                 self.kill()
 
-        # 화면 범위를 벗어난 경우 처리
-        if self.rect.top > settings.MAP_HEIGHT:
-            self.health -= 1
-            if self.health > 0:
-                self.respawn()
-            else:
-                self.kill()
-
-        if self.rect.bottom < settings.UPPER_LIMIT:
+        # 화면 밖으로 나갔을 때 처리
+        if self.rect.top > settings.MAP_HEIGHT or self.rect.bottom < settings.UPPER_LIMIT:
             self.health -= 1
             if self.health > 0:
                 self.respawn()
@@ -136,4 +122,3 @@ class Player(pygame.sprite.Sprite):
     def set_checkpoint(self, position):
         # 체크포인트 설정
         self.checkpoint = position
-

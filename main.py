@@ -340,8 +340,6 @@ try:
 
         if is_boss_level_active:
             # 스타 스프라이트 주기적으로 생성
-            current_level.stars.update()
-
             if current_time - star_spawn_timer > STAR_SPAWN_INTERVAL:
                 star_spawn_timer = current_time
                 # 스타를 보스방 내부 플랫폼에 랜덤하게 생성

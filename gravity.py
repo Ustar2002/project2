@@ -1,5 +1,3 @@
-# gravity.py
-
 import pygame
 import settings
 
@@ -18,11 +16,9 @@ class GravityManager:
 
         # 타이머 초기화
         self.gravity_timer = 0
-        self.is_recharging = False
         self.last_used_time = pygame.time.get_ticks()
 
     def set_gravity(self, direction):
-        # 중력 컨트롤량이 없으면 무시
         if self.current_gravity_control <= 0:
             return
 
@@ -54,15 +50,14 @@ class GravityManager:
                 self.current_gravity_control + self.recharge_rate * (1 / settings.FPS),
                 self.max_gravity_control
             )
-    
-    def gravity_vector(self):
-        return self.gravity
 
     def reset_gravity(self):
         self.gravity = pygame.math.Vector2(0, 1)
         self.current_gravity = 'down'
         self.gravity_timer = 0
 
+    def gravity_vector(self):
+        return self.gravity
 
     def jump_vector(self, strength):
         # 중력 방향에 따른 점프 벡터 설정

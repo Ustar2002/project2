@@ -1,5 +1,3 @@
-# enemy.py
-
 import pygame
 import settings
 
@@ -24,30 +22,26 @@ class Enemy(pygame.sprite.Sprite):
     def update(self, platforms, puzzles):
         # 중력 방향에 따라 이동
         gravity_direction = self.gravity_manager.current_gravity
+        self.vel.x, self.vel.y = 0, 0
 
-        
         if gravity_direction == 'down':
             self.vel.y = self.speed
-            self.vel.x = 0
         elif gravity_direction == 'up':
             self.vel.y = -self.speed
-            self.vel.x = 0
         elif gravity_direction == 'left':
             self.vel.x = -self.speed
-            self.vel.y = 0
         elif gravity_direction == 'right':
             self.vel.x = self.speed
-            self.vel.y = 0
-        
+
         self.rect.x += self.vel.x
         self.rect.y += self.vel.y
-        
+
         # 맵 경계 체크 및 반전
         if self.rect.left < 0 or self.rect.right > settings.MAP_WIDTH:
             self.vel.x *= -1
         if self.rect.top < 0 or self.rect.bottom > settings.MAP_HEIGHT:
             self.vel.y *= -1
-        
+
         # 퍼즐 블록과의 충돌 처리
         hits = pygame.sprite.spritecollide(self, puzzles, False)
         if hits:

@@ -1,5 +1,3 @@
-# level.py
-
 import pygame
 from platform import Platform
 from enemy import Enemy, EnemyType2
@@ -9,7 +7,6 @@ from trap import Trap
 from item import Item
 from flag import Flag
 from star import Star
-
 
 class Level:
     def __init__(self, level_data, gravity_manager):
@@ -22,7 +19,8 @@ class Level:
         self.traps = pygame.sprite.Group()
         self.flag = None
         self.boss = None
-        self.stars = pygame.sprite.Group()
+        self.stars = pygame.sprite.Group()  
+
 
         self.load_level(level_data)
 
@@ -65,4 +63,3 @@ class Level:
         if 'flag_position' in level_data:
             flag_position = level_data['flag_position']
             self.flag = Flag(flag_position[0], flag_position[1])
-
