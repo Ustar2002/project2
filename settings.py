@@ -51,3 +51,11 @@ UPPER_LIMIT = -200
 
 # 카메라 설정
 CAMERA_SCROLL_SPEED = 1
+
+# 보스 체력 바 설정
+BOSS_HEALTH_BAR_WIDTH = 200
+BOSS_HEALTH_BAR_HEIGHT = 20
+BOSS_HEALTH_BAR_BG_COLOR = (255, 0, 0)      # 배경 바 색상 (빨간색)
+BOSS_HEALTH_BAR_FG_COLOR = (0, 255, 0)      # 채워진 바 색상 (녹색)
+BOSS_HEALTH_TEXT_COLOR = (255, 255, 255)    # 텍스트 색상 (흰색)
+BOSS_HEALTH_BAR_MARGIN = 10                 # 화면 가장자리와의 거리

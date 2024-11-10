@@ -261,6 +261,34 @@ def show_game_over_screen():
                     pygame.quit()
                     sys.exit()
 
+def draw_boss_health_bar(screen, boss, font):
+    if boss is None:
+        return
+
+    # 보스 체력 정보 가져오기
+    boss_health = boss.health
+    boss_max_health = settings.BOSS_HEALTH
+
+    # 체력 바의 크기와 위치 설정
+    bar_width = settings.BOSS_HEALTH_BAR_WIDTH
+    bar_height = settings.BOSS_HEALTH_BAR_HEIGHT
+    margin = settings.BOSS_HEALTH_BAR_MARGIN
+    x = settings.SCREEN_WIDTH - bar_width - margin
+    y = margin
+
+    # 배경 바 그리기 (빨간색)
+    pygame.draw.rect(screen, settings.BOSS_HEALTH_BAR_BG_COLOR, (x, y, bar_width, bar_height))
+
+    # 현재 체력에 따른 채워진 바의 너비 계산
+    current_bar_width = int(bar_width * (boss_health / boss_max_health))
+
+    # 채워진 바 그리기 (녹색)
+    pygame.draw.rect(screen, settings.BOSS_HEALTH_BAR_FG_COLOR, (x, y, current_bar_width, bar_height))
+
+    # 보스 체력 텍스트 표시
+    health_text = font.render(f'Boss Health: {boss_health}/{boss_max_health}', True, settings.BOSS_HEALTH_TEXT_COLOR)
+    text_rect = health_text.get_rect(center=(x + bar_width // 2, y + bar_height + 10))
+    screen.blit(health_text, text_rect)
 
 def transition_to_boss_level():
     global current_level_index, current_level_data, current_level
@@ -504,6 +532,10 @@ try:
          # 스타 스프라이트 그리기
         for star in current_level.stars:
             screen.blit(star.image, camera.apply(star))
+        
+        # 보스 체력 바 그리기
+        if is_boss_level_active and current_level.boss:
+            draw_boss_health_bar(screen, current_level.boss, font)
 
         # UI 요소 그리기
         health_text = font.render(f'Health: {player.health}', True, settings.WHITE)
