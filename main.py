@@ -14,8 +14,10 @@ from heart import Heart
 from platform import Platform
 from star import Star
 from blood_effect import BloodEffect
+from boss import Boss  # 보스 클래스 임포트
 
 import settings
+import time
 
 # 초기화
 pygame.init()
@@ -139,6 +141,7 @@ current_level_data = level_data_list[current_level_index]
 current_level = Level(current_level_data, gravity_manager)
 is_boss_level_active = False  # 보스방 활성화 여부
 game_over = False
+victory = False  # 보스 클리어 여부
 running = True
 
 # 플레이어 생성
@@ -147,6 +150,10 @@ camera = Camera(settings.MAP_WIDTH, settings.MAP_HEIGHT)
 all_sprites = pygame.sprite.Group()
 all_sprites.add(current_level.platforms, current_level.enemies, current_level.enemies_type2,
                 current_level.items, current_level.puzzles, current_level.traps, player)
+
+# 클리어 시간 측정을 위한 변수
+level_start_time = pygame.time.get_ticks()
+level_end_time = None
 
 def reset_game(start_from_boss=False):
     # 게임 초기화 함수
@@ -219,6 +226,7 @@ ENEMY_SPAWN_INTERVAL = 5000
 ENEMY_SPAWN_RADIUS = 300
 running = True
 game_over = False
+victory = False
 
 
 def show_countdown():
@@ -256,6 +264,40 @@ def show_game_over_screen():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_y:
                     waiting = False
+                    return True
+                elif event.key == pygame.K_n:
+                    pygame.quit()
+                    sys.exit()
+
+def show_victory_screen():
+    # 보스 클리어 화면 표시 함수
+    screen.fill(settings.BLACK)
+    font_large = pygame.font.SysFont('Arial', 48)
+    victory_text = font_large.render('Congratulations! You Defeated the Boss!', True, settings.WHITE)
+    clear_time = (level_end_time - level_start_time) / 1000  # 초 단위로 변환
+    time_text = font.render(f'Clear Time: {clear_time:.2f} seconds', True, settings.WHITE)
+    prompt_text = font.render('Do you want to play again? Y/N', True, settings.WHITE)
+
+    screen.blit(victory_text, (settings.SCREEN_WIDTH // 2 - victory_text.get_width() // 2,
+                               settings.SCREEN_HEIGHT // 2 - 100))
+    screen.blit(time_text, (settings.SCREEN_WIDTH // 2 - time_text.get_width() // 2,
+                            settings.SCREEN_HEIGHT // 2 - 50))
+    screen.blit(prompt_text, (settings.SCREEN_WIDTH // 2 - prompt_text.get_width() // 2,
+                              settings.SCREEN_HEIGHT // 2))
+    pygame.display.flip()
+
+    waiting = True
+    while waiting:
+        clock.tick(settings.FPS)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_y:
+                    waiting = False
+                    reset_game(start_from_boss=False)
+                    show_countdown()
                     return True
                 elif event.key == pygame.K_n:
                     pygame.quit()
@@ -473,10 +515,11 @@ try:
                     #소리 효과 추가
                     stomp_sound.play()
 
-                    # 보스 체력이 0 이하이면 보스 제거
+                    # 보스 체력이 0 이하이면 보스 종료 애니메이션 실행
                     if current_level.boss.health <= 0:
-                        current_level.boss.kill()
-                        current_level.boss = None
+                        current_level.boss.finish_boss()
+                        level_end_time = pygame.time.get_ticks()  # 클리어 시간 기록
+                        victory = True  # 승리 상태 설정
                 else:
                     # 보스와의 일반적인 충돌 (플레이어 체력 감소)
                     player.health -= 1

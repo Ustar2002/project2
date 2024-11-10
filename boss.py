@@ -15,6 +15,24 @@ class Boss(pygame.sprite.Sprite):
             original_image = pygame.Surface((100, 100))
             original_image.fill(settings.PURPLE)
         self.image = pygame.transform.scale(original_image, (100, 100))
+        self.original_image = self.image  # 기본 이미지 저장
+
+        # 보스의 경직 이미지 로드
+        try:
+            stun_image = pygame.image.load('assets/images/boss_stun.png').convert_alpha()
+            self.stun_image = pygame.transform.scale(stun_image, (100, 100))
+        except FileNotFoundError:
+            # 경직 이미지가 없을 경우 기본 이미지 사용
+            self.stun_image = self.image.copy()
+
+        # 보스의 종료 이미지 로드
+        try:
+            finished_image = pygame.image.load('assets/images/boss_finished.png').convert_alpha()
+            self.finished_image = pygame.transform.scale(finished_image, (100, 100))
+        except FileNotFoundError:
+            # 종료 이미지가 없을 경우 기본 이미지 사용
+            self.finished_image = self.image.copy()
+
         self.rect = self.image.get_rect(center=(x, y))
 
         # 보스 속성 초기화
@@ -28,18 +46,41 @@ class Boss(pygame.sprite.Sprite):
         self.stun_timer = 0      # 경직 시작 시간
         self.stun_duration = 2000  # 경직 지속 시간 (밀리초 단위)
 
+        self.is_finished = False  # 보스의 종료 상태
+        self.finish_timer = 0     # 종료 애니메이션 시작 시간
+        self.finish_duration = settings.BOSS_FINISH_DURATION  # 종료 애니메이션 지속 시간 (밀리초 단위)
+
+
     def update(self, player):
         current_time = pygame.time.get_ticks()
+
+        if self.is_finished:
+            # 종료 애니메이션 실행 중
+            if current_time - self.finish_timer >= self.finish_duration:
+                # 종료 애니메이션 완료
+                self.kill()  # 보스 제거
+            else:
+                # 종료 애니메이션 진행 (예: 이미지 깜박임 또는 기타 효과 추가 가능)
+                # 현재는 단순히 종료 이미지를 유지
+                self.image = self.finished_image
 
         if self.is_stunned:
             # 경직 상태일 때는 이동과 공격을 하지 않습니다.
             if current_time - self.stun_timer >= self.stun_duration:
                 self.is_stunned = False  # 경직 해제
+                self.image = self.original_image  # 기본 이미지로 복구
+
         else:
             self.move_towards_player(player)
             self.attack_pattern(player, current_time)
             
         self.projectiles.update()
+
+        # 시각적 효과: 경직 상태일 때 경직 이미지로 변경
+        if self.is_stunned:
+            self.image = self.stun_image
+        else:
+            self.image = self.original_image
 
     def move_towards_player(self, player):
         # 플레이어를 향해 이동
@@ -69,3 +110,9 @@ class Boss(pygame.sprite.Sprite):
                 vel_y = dy / distance * speed
                 projectile = Projectile(self.rect.centerx, self.rect.centery, vel_x, vel_y)
                 self.projectiles.add(projectile)
+
+    def finish_boss(self):
+        """보스가 종료 상태로 전환될 때 호출"""
+        self.is_finished = True
+        self.finish_timer = pygame.time.get_ticks()
+        self.image = self.finished_image

@@ -64,3 +64,9 @@ BOSS_HEALTH_BAR_BG_COLOR = (255, 0, 0)      # 배경 바 색상 (빨간색)
 BOSS_HEALTH_BAR_FG_COLOR = (0, 255, 0)      # 채워진 바 색상 (녹색)
 BOSS_HEALTH_TEXT_COLOR = (255, 255, 255)    # 텍스트 색상 (흰색)
 BOSS_HEALTH_BAR_MARGIN = 10                 # 화면 가장자리와의 거리
+
+# 보스 종료 애니메이션 관련 설정
+BOSS_FINISH_DURATION = 2000    # 보스 종료 애니메이션 지속 시간 (밀리초)
+
+# 게임 일시정지 플래그
+PAUSED = False                    # 모든 스프라이트의 움직임을 정지시키는 플래그
