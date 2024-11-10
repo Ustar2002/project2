@@ -1,3 +1,5 @@
+#flag.py
+
 import pygame
 import settings
 
