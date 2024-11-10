@@ -165,6 +165,7 @@ def reset_game(start_from_boss=False):
     
     all_sprites.add(current_level.platforms.sprites())
     all_sprites.add(current_level.enemies.sprites())
+    
     all_sprites.add(current_level.enemies_type2.sprites())
     all_sprites.add(current_level.items.sprites())
     all_sprites.add(current_level.puzzles.sprites())
