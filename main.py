@@ -144,6 +144,7 @@ current_level = Level(current_level_data, gravity_manager)
 is_boss_level_active = False  # 보스방 활성화 여부
 game_over = False
 victory = False  # 보스 클리어 여부
+boss_defeated_time = None  # 보스 처치 시간 추적 변수 추가
 running = True
 
 # 플레이어 생성
@@ -203,6 +204,9 @@ def reset_game(start_from_boss=False):
     
     game_over = False
     victory = False
+    boss_defeated_time = None  # 초기화
+    level_start_time = pygame.time.get_ticks()  # 새로운 레벨 시작 시간 초기화
+    level_end_time = None  # 초기화
 
     if start_from_boss:
         is_boss_level_active = True
@@ -222,7 +226,7 @@ checkpoint_position = (900, 200)
 enemy_spawn_timer = pygame.time.get_ticks()
 heart_spawn_timer = pygame.time.get_ticks()
 heart_group = pygame.sprite.Group()
-ENEMY_SPAWN_INTERVAL = 5000
+ENEMY_SPAWN_INTERVAL = 500
 ENEMY_SPAWN_RADIUS = 300
 
 def show_countdown():
@@ -548,6 +552,8 @@ try:
                     if current_level.boss.health <= 0:
                         current_level.boss.finish_boss()
                         level_end_time = pygame.time.get_ticks()  # 클리어 시간 기록
+                        boss_defeated_time = pygame.time.get_ticks()  # 보스 처치 시간 설정
+
                         victory = True  # 승리 상태 설정
                         print("Boss defeated!")
                 else:
@@ -608,6 +614,7 @@ try:
             reset_game(start_from_boss=False)
             show_countdown()
             continue
+        
 
         # 화면 그리기
         screen.fill(settings.BLACK)
