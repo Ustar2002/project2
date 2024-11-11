@@ -507,11 +507,9 @@ try:
                     game_over = True
 
             # 보스의 투사체와 스타의 충돌 처리
-            # 스타가 보스의 투사체와 충돌 시 스타 제거
             for projectile in current_level.boss.projectiles:
                 star_hits = pygame.sprite.spritecollide(projectile, current_level.stars, True)
                 if star_hits:
-                    projectile.kill()
                     print(f"Projectile at ({projectile.rect.centerx}, {projectile.rect.centery}) hit a star and was removed.")
 
             # 보스와 스타의 충돌 처리

@@ -28,7 +28,7 @@ GRAVITY_RECHARGE_TIME = 3
 # 플레이어 설정
 PLAYER_SPEED = 4
 PLAYER_JUMP_STRENGTH = 15
-PLAYER_HEALTH = 10
+PLAYER_HEALTH = 5
 PLAYER_INVINCIBILITY_DURATION = 2000  # 플레이어 무적 지속 시간 (밀리초)
 
 # 적 설정
@@ -55,7 +55,7 @@ CAMERA_SCROLL_SPEED = 1
 
 # 보스 스텀프 관련 설정
 BOSS_STUN_DURATION = 2000        # 보스가 경직 상태로 있는 시간 (밀리초)
-BOSS_STOMP_DAMAGE = 10            # 보스를 밟았을 때 감소하는 체력
+BOSS_STOMP_DAMAGE = 30            # 보스를 밟았을 때 감소하는 체력
 BLOOD_EFFECT_DURATION = 500       # 피 효과 지속 시간 (밀리초)
 
 # 보스 체력 바 설정

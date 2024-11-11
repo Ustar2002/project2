@@ -119,9 +119,9 @@ class Boss(pygame.sprite.Sprite):
     def attack_pattern(self, player, current_time):
         # 보스 체력에 따라 공격 패턴 변화
         if self.health > settings.BOSS_HEALTH * 0.5:
-            attack_interval = 1000  # 1초마다 공격
+            attack_interval = 2000  # 2초마다 공격
         else:
-            attack_interval = 700   # 0.7초마다 공격
+            attack_interval = 1400   # 1.4초마다 공격
 
         if current_time - self.attack_timer > attack_interval:
             self.attack_timer = current_time
