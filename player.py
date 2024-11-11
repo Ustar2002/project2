@@ -29,15 +29,38 @@ class Player(pygame.sprite.Sprite):
         self.on_ground = False
         self.health = settings.PLAYER_HEALTH
         self.checkpoint = None
+        self.invincible = False  # 무적 상태 플래그
+        self.invincibility_timer = 0  # 무적 타이머
 
         # 이전 위치 추적
         self.prev_rect = self.rect.copy()
+        
+    def set_invincible(self, invincible):
+        self.invincible = invincible
+        if invincible:
+            # 무적 상태일 때 시각적 효과 (예: 반투명)
+            self.image.set_alpha(128)
+            self.invincibility_timer = pygame.time.get_ticks()
+        else:
+            # 무적 상태 해제 시 시각적 효과 복원
+            self.image.set_alpha(255)
+
+    def take_damage(self, amount):
+        if not self.invincible:
+            self.health -= amount
+            print(f"Player took {amount} damage! Health: {self.health}")
+            self.set_invincible(True)  # 무적 상태로 설정
 
     def update(self, platforms, enemies, jump_sound):
         # 이전 위치 저장 (이동하기 전에 저장)
         self.prev_rect = self.rect.copy()
 
-        
+        current_time = pygame.time.get_ticks()
+
+        # 무적 시간 체크
+        if self.invincible and (current_time - self.invincibility_timer >= settings.PLAYER_INVINCIBILITY_DURATION):
+            self.set_invincible(False)
+
         keys = pygame.key.get_pressed()
         self.vel.x = 0
         gravity_direction = self.gravity_manager.current_gravity
@@ -82,15 +105,13 @@ class Player(pygame.sprite.Sprite):
         # 적과의 충돌 처리
         hits = pygame.sprite.spritecollide(self, enemies, False)
         if hits:
-            self.health -= 1
-            if self.health > 0:
-                self.respawn()
-            else:
+            self.take_damage(1)
+            if self.health <= 0:
                 self.kill()
 
         # 화면 밖으로 나갔을 때 처리
         if self.rect.top > settings.MAP_HEIGHT or self.rect.bottom < settings.UPPER_LIMIT:
-            self.health -= 1
+            self.take_damage(1)
             if self.health > 0:
                 self.respawn()
             else:

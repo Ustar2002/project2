@@ -29,6 +29,7 @@ GRAVITY_RECHARGE_TIME = 3
 PLAYER_SPEED = 4
 PLAYER_JUMP_STRENGTH = 25
 PLAYER_HEALTH = 9999999
+PLAYER_INVINCIBILITY_DURATION = 2000  # 플레이어 무적 지속 시간 (밀리초)
 
 # 적 설정
 ENEMY_SPEED = 2
@@ -70,3 +71,6 @@ BOSS_FINISH_DURATION = 2000    # 보스 종료 애니메이션 지속 시간 (�
 
 # 게임 일시정지 플래그
 PAUSED = False                    # 모든 스프라이트의 움직임을 정지시키는 플래그
+
+# 스타 설정
+STAR_SPEED = 5  # 스타의 이동 속도 추가

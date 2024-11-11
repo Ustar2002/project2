@@ -23,7 +23,6 @@ class Level:
         self.boss = None
         self.stars = pygame.sprite.Group()  
 
-
         self.load_level(level_data)
 
     def load_level(self, level_data):

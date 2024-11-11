@@ -34,7 +34,6 @@ class Camera:
             self.camera_rect.x = max(0, min(self.camera_rect.x, self.width - settings.SCREEN_WIDTH))
             self.camera_rect.y = max(0, min(self.camera_rect.y, self.height - settings.SCREEN_HEIGHT))
 
-
         else:
             # 카메라 자동 스크롤
             self.camera_rect.x += self.scroll_speed

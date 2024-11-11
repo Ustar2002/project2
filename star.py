@@ -16,7 +16,20 @@ class Star(pygame.sprite.Sprite):
         # 이미지 크기 조정
         self.image = pygame.transform.scale(original_image, (30, 30))
         self.rect = self.image.get_rect(center=(x, y))
+        self.speed = settings.STAR_SPEED  # settings.py에 STAR_SPEED 추가 필요
 
-    def update(self):
-        # 스타는 기본적으로 움직이지 않으므로 업데이트 로직이 필요 없습니다.
-        pass
+
+    def update(self, keys):
+        # 스타 이동 처리
+        if keys[pygame.K_UP]:
+            self.rect.y -= self.speed
+        if keys[pygame.K_DOWN]:
+            self.rect.y += self.speed
+        if keys[pygame.K_LEFT]:
+            self.rect.x -= self.speed
+        if keys[pygame.K_RIGHT]:
+            self.rect.x += self.speed
+
+        # 맵 경계 내에서만 이동
+        self.rect.x = max(0, min(self.rect.x, settings.MAP_WIDTH - self.rect.width))
+        self.rect.y = max(0, min(self.rect.y, settings.MAP_HEIGHT - self.rect.height))

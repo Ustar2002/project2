@@ -14,10 +14,12 @@ from heart import Heart
 from platform import Platform
 from star import Star
 from blood_effect import BloodEffect
-from boss import Boss  # 보스 클래스 임포트
+from boss import Boss  
 
 import settings
 import time
+import traceback  # 추가: 예외 스택 추적을 위한 모듈
+
 
 # 초기화
 pygame.init()
@@ -170,13 +172,12 @@ def reset_game(start_from_boss=False):
 
     camera = Camera(settings.MAP_WIDTH, settings.MAP_HEIGHT)
     camera.fixed_position = None  # 카메라 고정 해제
-    
+
     # all_sprites를 새로 생성
     all_sprites = pygame.sprite.Group()
     
     all_sprites.add(current_level.platforms.sprites())
     all_sprites.add(current_level.enemies.sprites())
-    
     all_sprites.add(current_level.enemies_type2.sprites())
     all_sprites.add(current_level.items.sprites())
     all_sprites.add(current_level.puzzles.sprites())
@@ -304,12 +305,12 @@ def show_victory_screen():
                     sys.exit()
 
 def draw_boss_health_bar(screen, boss, font):
-    if boss is None:
+    if boss is None or not boss.alive():
         return
 
     # 보스 체력 정보 가져오기
     boss_health = boss.health
-    boss_max_health = settings.BOSS_HEALTH
+    boss_max_health = boss.max_health  # 수정: settings.BOSS_HEALTH 대신 boss.max_health
 
     # 체력 바의 크기와 위치 설정
     bar_width = settings.BOSS_HEALTH_BAR_WIDTH
@@ -366,7 +367,7 @@ def transition_to_boss_level():
     all_sprites.add(current_level.traps.sprites())
     all_sprites.add(current_level.stars.sprites()) 
     all_sprites.add(player)
-    if current_level.boss:
+    if current_level.boss and current_level.boss.alive():
         all_sprites.add(current_level.boss)
 
     # 카메라 고정 위치 설정
@@ -397,7 +398,7 @@ try:
         clock.tick(settings.FPS)
 
         if not is_boss_level_active:
-        # 적 스폰 로직은 보스방이 아닐 때만 실행
+            # 적 스폰 로직은 보스방이 아닐 때만 실행
             if current_time - enemy_spawn_timer > ENEMY_SPAWN_INTERVAL:
                 enemy_spawn_timer = current_time
                 while True:
@@ -416,15 +417,16 @@ try:
                 all_sprites.add(new_enemy)
 
         if is_boss_level_active:
-            # 스타 스프라이트 주기적으로 생성
+            # 스타 스프라이트 주기적으로 생성 (최대 3개)
             if current_time - star_spawn_timer > STAR_SPAWN_INTERVAL:
-                star_spawn_timer = current_time
-                # 스타를 보스방 내부 플랫폼에 랜덤하게 생성
-                star_x = random.randint(4020 + 30, 4780 - 30)  # 벽 두께와 스타 크기를 고려
-                star_y = random.randint(220, 780 - 30)
-                new_star = Star(star_x, star_y)
-                current_level.stars.add(new_star)
-                all_sprites.add(new_star)
+                if len(current_level.stars) < 3:
+                    star_spawn_timer = current_time
+                    # 스타를 보스방 내부 플랫폼에 랜덤하게 생성
+                    star_x = random.randint(4020 + 30, 4780 - 30)  # 벽 두께와 스타 크기를 고려
+                    star_y = random.randint(220, 780 - 30)
+                    new_star = Star(star_x, star_y)
+                    current_level.stars.add(new_star)
+                    all_sprites.add(new_star)
 
         # 이벤트 처리
         for event in pygame.event.get():
@@ -440,6 +442,9 @@ try:
                     gravity_manager.set_gravity('left')
                 elif event.key == pygame.K_RIGHT:
                     gravity_manager.set_gravity('right')
+
+        # 키보드 입력 상태 가져오기
+        keys = pygame.key.get_pressed()
 
         # 업데이트 로직
         gravity_manager.update()
@@ -466,16 +471,22 @@ try:
         if heart_hits:
             player.health = min(player.health + 1, settings.PLAYER_HEALTH)
 
-
         # 충돌 처리
         if current_level.flag and pygame.sprite.collide_rect(player, current_level.flag):
             print("Congratulations! You reached the flag!")
             transition_to_boss_level()
             continue
 
-        if current_level.boss:
+        if current_level.boss and current_level.boss.alive():
             current_level.boss.update(player)
             current_level.boss.projectiles.update()
+
+            # 보스의 투사체와 플레이어의 충돌 처리
+            boss_projectile_hits = pygame.sprite.spritecollide(player, current_level.boss.projectiles, True)
+            if boss_projectile_hits:
+                player.take_damage(1)
+                if player.health <= 0:
+                    game_over = True
 
             # 보스의 투사체와 스타의 충돌 처리
             projectile_star_hits = pygame.sprite.groupcollide(
@@ -492,16 +503,16 @@ try:
                 True  # 스타는 제거
             )
             if boss_star_hits:
-                current_level.boss.health -= 30
+                current_level.boss.take_damage(30)
                 current_level.boss.is_stunned = True
                 current_level.boss.stun_timer = pygame.time.get_ticks()
 
-             # 보스와 플레이어의 충돌 처리
+            # 보스와 플레이어의 충돌 처리
             if pygame.sprite.collide_rect(player, current_level.boss):
                 # 플레이어가 보스를 밟았는지 확인
                 if (player.vel.y > 0) and (player.prev_rect.bottom <= current_level.boss.rect.top):
                     # 플레이어가 보스를 밟음
-                    current_level.boss.health -= settings.BOSS_STOMP_DAMAGE  # 설정 파일에서 정의한 값 사용
+                    current_level.boss.take_damage(settings.BOSS_STOMP_DAMAGE)  # 설정 파일에서 정의한 값 사용
                     current_level.boss.is_stunned = True
                     current_level.boss.stun_timer = pygame.time.get_ticks()
 
@@ -522,76 +533,57 @@ try:
                         victory = True  # 승리 상태 설정
                 else:
                     # 보스와의 일반적인 충돌 (플레이어 체력 감소)
-                    player.health -= 1
+                    player.take_damage(1)
                     if player.health <= 0:
                         game_over = True
 
-            hits = pygame.sprite.spritecollide(
-                player,
-                current_level.boss.projectiles,
-                True
-            )
-            if hits:
-                player.health -= 1
-                if player.health <= 0:
-                    game_over = True
-            if pygame.sprite.collide_rect(player, current_level.boss):
-                player.health -= 1
-                if player.health <= 0:
-                    game_over = True
-
+        # 적과의 충돌 처리
         enemy_hits = pygame.sprite.spritecollide(player, current_level.enemies, False)
         enemy_type2_hits = pygame.sprite.spritecollide(player, current_level.enemies_type2, False)
         if enemy_hits or enemy_type2_hits:
-            player.health -= 1
+            player.take_damage(1)
             if player.health <= 0:
                 game_over = True
 
         trap_hits = pygame.sprite.spritecollide(player, current_level.traps, False)
         if trap_hits:
-            player.health -= 1
+            player.take_damage(1)
             if player.health > 0:
                 player.respawn()
             else:
                 game_over = True
-
-        if player.health <= 0:
-            game_over = True
-
-        if player.rect.colliderect(pygame.Rect(checkpoint_position[0], checkpoint_position[1], 50, 50)):
-            player.set_checkpoint(checkpoint_position)
-
-
 
         # 카메라 업데이트
         camera.update()
 
         if not camera.camera_rect.colliderect(player.rect):
-            player.health -= 1
+            player.take_damage(1)
             if player.health > 0:
                 player.respawn()
             else:
                 game_over = True
 
-        if current_time - enemy_spawn_timer > ENEMY_SPAWN_INTERVAL:
-            enemy_spawn_timer = current_time
-            while True:
-                spawn_x = random.randint(int(camera.camera_rect.x), int(camera.camera_rect.x + settings.SCREEN_WIDTH))
-                spawn_y = random.randint(0, settings.MAP_HEIGHT - 100)
-                distance_to_player = ((spawn_x - player.rect.centerx) ** 2 + (spawn_y - player.rect.centery) ** 2) ** 0.5
-                if distance_to_player > ENEMY_SPAWN_RADIUS:
-                    break
+        # 스타 스프라이트 업데이트 (방향키에 따라 이동)
+        current_level.stars.update(keys)
 
-            if random.choice([True, False]):
-                new_enemy = Enemy(spawn_x, spawn_y, gravity_manager)
-                current_level.enemies.add(new_enemy)
-            else:
-                new_enemy = EnemyType2(spawn_x, spawn_y, gravity_manager)
-                current_level.enemies_type2.add(new_enemy)
-            all_sprites.add(new_enemy)
-        
-        # all_sprites 그리기 전에 스타 스프라이트 업데이트
-        current_level.stars.update()
+        if not is_boss_level_active:
+            # 적 스폰 로직은 보스방이 아닐 때만 실행
+            if current_time - enemy_spawn_timer > ENEMY_SPAWN_INTERVAL:
+                enemy_spawn_timer = current_time
+                while True:
+                    spawn_x = random.randint(int(camera.camera_rect.x), int(camera.camera_rect.x + settings.SCREEN_WIDTH))
+                    spawn_y = random.randint(0, settings.MAP_HEIGHT - 100)
+                    distance_to_player = ((spawn_x - player.rect.centerx) ** 2 + (spawn_y - player.rect.centery) ** 2) ** 0.5
+                    if distance_to_player > ENEMY_SPAWN_RADIUS:
+                        break
+
+                if random.choice([True, False]):
+                    new_enemy = Enemy(spawn_x, spawn_y, gravity_manager)
+                    current_level.enemies.add(new_enemy)
+                else:
+                    new_enemy = EnemyType2(spawn_x, spawn_y, gravity_manager)
+                    current_level.enemies_type2.add(new_enemy)
+                all_sprites.add(new_enemy)
 
         # 화면 그리기
         screen.fill(settings.BLACK)
@@ -599,16 +591,16 @@ try:
             screen.blit(sprite.image, camera.apply(sprite))
 
         # 보스의 투사체 그리기
-        if current_level.boss:
+        if current_level.boss and current_level.boss.alive():
             for projectile in current_level.boss.projectiles:
                 screen.blit(projectile.image, camera.apply(projectile))
 
-         # 스타 스프라이트 그리기
+        # 스타 스프라이트 그리기
         for star in current_level.stars:
             screen.blit(star.image, camera.apply(star))
         
         # 보스 체력 바 그리기
-        if is_boss_level_active and current_level.boss:
+        if is_boss_level_active and current_level.boss and current_level.boss.alive():
             draw_boss_health_bar(screen, current_level.boss, font)
 
         # UI 요소 그리기
@@ -625,6 +617,7 @@ try:
         pygame.display.flip()
 except Exception as e:
     print(f'An error occurred: {e}')
+    traceback.print_exc()  # 예외 스택 트레이스 출력
 finally:
     pygame.quit()
     sys.exit()
