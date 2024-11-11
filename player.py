@@ -111,7 +111,7 @@ class Player(pygame.sprite.Sprite):
 
         # 화면 밖으로 나갔을 때 처리
         if self.rect.top > settings.MAP_HEIGHT or self.rect.bottom < settings.UPPER_LIMIT:
-            self.take_damage(1)
+            self.take_damage(10)
             if self.health > 0:
                 self.respawn()
             else:

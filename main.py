@@ -190,6 +190,7 @@ def reset_game(start_from_boss=False):
     
     if current_level.boss:
         all_sprites.add(current_level.boss)
+        print("Boss has been added to all_sprites during reset_game.")
         # 보스의 투사체는 여기서 추가하지 않습니다.
 
     if current_level.flag:
@@ -198,6 +199,7 @@ def reset_game(start_from_boss=False):
     if start_from_boss and current_level.stars:
         for star in current_level.stars:
             all_sprites.add(star)
+            print(f"Star at ({star.rect.centerx}, {star.rect.centery}) has been added to all_sprites during reset_game.")
     
     game_over = False
     victory = False
@@ -339,6 +341,7 @@ def transition_to_boss_level():
     global player, all_sprites, camera, is_boss_level_active
     global star_spawn_timer  # 전역 변수로 선언
 
+    print("Transitioning to boss level.")
     # 보스 레벨로 업데이트
     current_level_index = 1
     current_level_data = level_data_list[current_level_index]
@@ -360,8 +363,11 @@ def transition_to_boss_level():
     all_sprites.add(current_level.traps.sprites())
     all_sprites.add(current_level.stars.sprites()) 
     all_sprites.add(player)
-    if current_level.boss and current_level.boss.alive():
+    if current_level.boss:
         all_sprites.add(current_level.boss)
+        print("Boss has been added to all_sprites.")
+    else:
+        print("Boss is not available or already dead.")
 
     # 카메라 고정 위치 설정
     camera.fixed_position = None  # 이 줄을 수정하여 카메라 고정 해제
@@ -377,6 +383,7 @@ def activate_stars(direction):
     for star in current_level.stars:
         if not star.active:
             star.set_direction(direction)
+            print(f"Star at ({star.rect.centerx}, {star.rect.centery}) activated to move {direction}.")
 
 # 메인 루프
 show_countdown()
@@ -411,9 +418,11 @@ try:
                 if random.choice([True, False]):
                     new_enemy = Enemy(spawn_x, spawn_y, gravity_manager)
                     current_level.enemies.add(new_enemy)
+                    print(f"Spawned EnemyType1 at ({spawn_x}, {spawn_y}).")
                 else:
                     new_enemy = EnemyType2(spawn_x, spawn_y, gravity_manager)
                     current_level.enemies_type2.add(new_enemy)
+                    print(f"Spawned EnemyType2 at ({spawn_x}, {spawn_y}).")
                 all_sprites.add(new_enemy)
 
         if is_boss_level_active:
@@ -427,6 +436,7 @@ try:
                     new_star = Star(star_x, star_y)
                     current_level.stars.add(new_star)
                     all_sprites.add(new_star)
+                    print(f"Spawned Star at ({star_x}, {star_y}).")
 
         # 이벤트 처리
         for event in pygame.event.get():
@@ -461,6 +471,7 @@ try:
         item_hits = pygame.sprite.spritecollide(player, current_level.items, True)
         if item_hits:
             player.health = min(player.health + 1, settings.PLAYER_HEALTH)
+            print(f"Player picked up an item. Health: {player.health}")
 
         current_time = pygame.time.get_ticks()
         if current_time - heart_spawn_timer > settings.HEART_SPAWN_INTERVAL:
@@ -470,10 +481,12 @@ try:
             new_heart = Heart(heart_x, heart_y)
             heart_group.add(new_heart)
             all_sprites.add(new_heart)
+            print(f"Spawned Heart at ({heart_x}, {heart_y}).")
 
         heart_hits = pygame.sprite.spritecollide(player, heart_group, True)
         if heart_hits:
             player.health = min(player.health + 1, settings.PLAYER_HEALTH)
+            print(f"Player picked up a heart. Health: {player.health}")
 
         # 충돌 처리
         if current_level.flag and pygame.sprite.collide_rect(player, current_level.flag):
@@ -489,6 +502,7 @@ try:
             boss_projectile_hits = pygame.sprite.spritecollide(player, current_level.boss.projectiles, True)
             if boss_projectile_hits:
                 player.take_damage(1)
+                print(f"Player hit by boss's projectile. Health: {player.health}")
                 if player.health <= 0:
                     game_over = True
 
@@ -498,6 +512,7 @@ try:
                 star_hits = pygame.sprite.spritecollide(projectile, current_level.stars, True)
                 if star_hits:
                     projectile.kill()
+                    print(f"Projectile at ({projectile.rect.centerx}, {projectile.rect.centery}) hit a star and was removed.")
 
             # 보스와 스타의 충돌 처리
             boss_star_hits = pygame.sprite.spritecollide(
@@ -509,6 +524,7 @@ try:
                 current_level.boss.take_damage(30)
                 current_level.boss.is_stunned = True
                 current_level.boss.stun_timer = pygame.time.get_ticks()
+                print(f"Boss hit by a star. Health: {current_level.boss.health}")
 
             # 보스와 플레이어의 충돌 처리
             if pygame.sprite.collide_rect(player, current_level.boss):
@@ -522,6 +538,7 @@ try:
                     # 피 효과 추가
                     blood = BloodEffect(current_level.boss.rect.centerx, current_level.boss.rect.top)
                     all_sprites.add(blood)
+                    print("Boss stomped by player.")
 
                     # 플레이어 점프 (보스 밟은 후 반동 효과)
                     player.vel.y = -player.jump_strength / 2  # 반동 높이 조절
@@ -534,9 +551,11 @@ try:
                         current_level.boss.finish_boss()
                         level_end_time = pygame.time.get_ticks()  # 클리어 시간 기록
                         victory = True  # 승리 상태 설정
+                        print("Boss defeated!")
                 else:
                     # 보스와의 일반적인 충돌 (플레이어 체력 감소)
                     player.take_damage(1)
+                    print(f"Player collided with boss. Health: {player.health}")
                     if player.health <= 0:
                         game_over = True
 
@@ -545,14 +564,17 @@ try:
         enemy_type2_hits = pygame.sprite.spritecollide(player, current_level.enemies_type2, False)
         if enemy_hits or enemy_type2_hits:
             player.take_damage(1)
+            print(f"Player collided with enemy. Health: {player.health}")
             if player.health <= 0:
                 game_over = True
 
         trap_hits = pygame.sprite.spritecollide(player, current_level.traps, False)
         if trap_hits:
             player.take_damage(1)
+            print(f"Player hit by trap. Health: {player.health}")
             if player.health > 0:
                 player.respawn()
+                print("Player respawned.")
             else:
                 game_over = True
 
@@ -560,9 +582,11 @@ try:
         camera.update()
 
         if not camera.camera_rect.colliderect(player.rect):
-            player.take_damage(1)
+            player.take_damage(10)
+            print(f"Player went out of camera view. Health: {player.health}")
             if player.health > 0:
                 player.respawn()
+                print("Player respawned after going out of view.")
             else:
                 game_over = True
 
@@ -574,10 +598,12 @@ try:
             # 스타가 플랫폼과 충돌하면 제거
             if pygame.sprite.spritecollideany(star, current_level.platforms):
                 star.kill()
+                print(f"Star at ({star.rect.centerx}, {star.rect.centery}) collided with a platform and was removed.")
             # 스타가 보스와 충돌하면 데미지를 주고 제거
             if is_boss_level_active and current_level.boss and pygame.sprite.collide_rect(star, current_level.boss):
                 current_level.boss.take_damage(10)  # 원하는 데미지 설정
                 star.kill()
+                print(f"Star at ({star.rect.centerx}, {star.rect.centery}) collided with boss and was removed.")
 
         if is_boss_level_active and victory:
             show_victory_screen()

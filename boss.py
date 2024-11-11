@@ -53,6 +53,8 @@ class Boss(pygame.sprite.Sprite):
 
         self.invincible = False   # 보스의 무적 상태 플래그
 
+        print(f"Boss created at ({x}, {y}). Initial Health: {self.health}")
+
     def set_invincible(self, invincible):
         self.invincible = invincible
         if invincible:
@@ -77,6 +79,7 @@ class Boss(pygame.sprite.Sprite):
             if current_time - self.finish_timer >= self.finish_duration:
                 # 종료 애니메이션 완료
                 self.kill()  # 보스 제거
+                print("Boss has been removed from the game.")
             else:
                 # 종료 애니메이션 진행 (예: 이미지 깜박임 또는 기타 효과 추가 가능)
                 # 현재는 단순히 종료 이미지를 유지
@@ -89,6 +92,7 @@ class Boss(pygame.sprite.Sprite):
                 self.is_stunned = False  # 경직 해제
                 self.set_invincible(False)  # 무적 해제
                 self.image = self.original_image  # 기본 이미지로 복구
+                print("Boss is no longer stunned.")
             else:
                 self.image = self.stun_image  # 경직 이미지로 변경
                 self.set_invincible(True)  # 무적 설정
@@ -106,8 +110,11 @@ class Boss(pygame.sprite.Sprite):
         distance = (dx ** 2 + dy ** 2) ** 0.5
 
         if distance != 0:
-            self.rect.x += int(dx / distance * self.speed)
-            self.rect.y += int(dy / distance * self.speed)
+            move_x = int(dx / distance * self.speed)
+            move_y = int(dy / distance * self.speed)
+            self.rect.x += move_x
+            self.rect.y += move_y
+            print(f"Boss moved to ({self.rect.centerx}, {self.rect.centery}).")
 
     def attack_pattern(self, player, current_time):
         # 보스 체력에 따라 공격 패턴 변화
@@ -127,6 +134,7 @@ class Boss(pygame.sprite.Sprite):
                 vel_y = dy / distance * speed
                 projectile = Projectile(self.rect.centerx, self.rect.centery, vel_x, vel_y)
                 self.projectiles.add(projectile)
+                print(f"Boss attacked. Projectile launched towards ({player.rect.centerx}, {player.rect.centery}).")
 
     def finish_boss(self):
         """보스가 종료 상태로 전환될 때 호출"""
@@ -137,3 +145,5 @@ class Boss(pygame.sprite.Sprite):
         for projectile in self.projectiles:
             projectile.kill()
         self.projectiles.empty()
+        print("Boss is finishing the battle.")
+
