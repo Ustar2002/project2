@@ -18,7 +18,7 @@ from boss import Boss
 
 import settings
 import time
-import traceback  # 추가: 예외 스택 추적을 위한 모듈
+import traceback  # 예외 스택 추적을 위한 모듈
 
 
 # 초기화
@@ -160,7 +160,7 @@ level_end_time = None
 def reset_game(start_from_boss=False):
     # 게임 초기화 함수
     global current_level, player, camera, all_sprites, game_over, is_boss_level_active
-    global current_level_index, current_level_data
+    global current_level_index, current_level_data, star_spawn_timer
 
     current_level_index = 1 if start_from_boss else 0
     current_level_data = level_data_list[current_level_index]
@@ -168,7 +168,11 @@ def reset_game(start_from_boss=False):
 
     player = Player(gravity_manager)
     player.health = settings.PLAYER_HEALTH  # 체력 초기화
-    player.rect.centerx, player.rect.bottom = settings.INITIAL_PLATFORM_POSITION[:2]
+    if not start_from_boss:
+        player.rect.centerx, player.rect.bottom = settings.INITIAL_PLATFORM_POSITION[:2]
+    else:
+        player.rect.centerx = current_level_data['player_start_position'][0]
+        player.rect.bottom = current_level_data['player_start_position'][1]
 
     camera = Camera(settings.MAP_WIDTH, settings.MAP_HEIGHT)
     camera.fixed_position = None  # 카메라 고정 해제
@@ -191,29 +195,23 @@ def reset_game(start_from_boss=False):
     if current_level.flag:
         all_sprites.add(current_level.flag)  # all_sprites가 정의된 후에 호출
 
+    if start_from_boss and current_level.stars:
+        for star in current_level.stars:
+            all_sprites.add(star)
+    
     game_over = False
+    victory = False
 
     if start_from_boss:
-        player.rect.centerx = 4400  # 보스방의 중앙 x 좌표 (예시)
-        player.rect.bottom = 700    # 보스방의 바닥에서 약간 위쪽 (예시)
         is_boss_level_active = True
 
-        # 플레이어 아래에 플랫폼 생성 및 추가
-        platform_width = 200
-        platform_height = 20
-        platform_x = player.rect.centerx - platform_width // 2
-        platform_y = player.rect.bottom
-        new_platform = Platform(platform_x, platform_y, platform_width, platform_height)
-        current_level.platforms.add(new_platform)
-        all_sprites.add(new_platform)
-
-        # 카메라 고정 위치 해제 및 타겟 설정
-        camera.fixed_position = None
+        # 카메라 타겟 설정
         camera.update_target(player)
-    
+
+        # 스타 스폰 타이머 초기화
+        star_spawn_timer = pygame.time.get_ticks()
+
     else:
-        # 보스 레벨이 아닌 경우 카메라의 고정 위치를 해제합니다.
-        camera.fixed_position = None
         is_boss_level_active = False
 
 
@@ -225,10 +223,6 @@ heart_spawn_timer = pygame.time.get_ticks()
 heart_group = pygame.sprite.Group()
 ENEMY_SPAWN_INTERVAL = 5000
 ENEMY_SPAWN_RADIUS = 300
-running = True
-game_over = False
-victory = False
-
 
 def show_countdown():
     # 카운트다운 표시 함수
@@ -377,6 +371,13 @@ def transition_to_boss_level():
     # 보스방 관련 변수 초기화
     star_spawn_timer = pygame.time.get_ticks()  # 스타 스폰 타이머 초기화
 
+def activate_stars(direction):
+    """
+    모든 스타를 활성화하여 주어진 방향으로 이동하게 합니다.
+    """
+    for star in current_level.stars:
+        if not star.active:
+            star.set_direction(direction)
 
 # 메인 루프
 show_countdown()
@@ -436,12 +437,16 @@ try:
                 # 중력 방향 변경
                 if event.key == pygame.K_UP:
                     gravity_manager.set_gravity('up')
+                    activate_stars('up')
                 elif event.key == pygame.K_DOWN:
                     gravity_manager.set_gravity('down')
+                    activate_stars('down')
                 elif event.key == pygame.K_LEFT:
                     gravity_manager.set_gravity('left')
+                    activate_stars('left')
                 elif event.key == pygame.K_RIGHT:
                     gravity_manager.set_gravity('right')
+                    activate_stars('right')
 
         # 키보드 입력 상태 가져오기
         keys = pygame.key.get_pressed()
@@ -523,7 +528,7 @@ try:
                     # 플레이어 점프 (보스 밟은 후 반동 효과)
                     player.vel.y = -player.jump_strength / 2  # 반동 높이 조절
 
-                    #소리 효과 추가
+                    # 소리 효과 추가
                     stomp_sound.play()
 
                     # 보스 체력이 0 이하이면 보스 종료 애니메이션 실행
@@ -563,27 +568,14 @@ try:
             else:
                 game_over = True
 
-        # 스타 스프라이트 업데이트 (방향키에 따라 이동)
-        current_level.stars.update(keys)
+        # 스타 스프라이트 업데이트 (중력 방향에 따라 이동)
+        current_level.stars.update()
 
-        if not is_boss_level_active:
-            # 적 스폰 로직은 보스방이 아닐 때만 실행
-            if current_time - enemy_spawn_timer > ENEMY_SPAWN_INTERVAL:
-                enemy_spawn_timer = current_time
-                while True:
-                    spawn_x = random.randint(int(camera.camera_rect.x), int(camera.camera_rect.x + settings.SCREEN_WIDTH))
-                    spawn_y = random.randint(0, settings.MAP_HEIGHT - 100)
-                    distance_to_player = ((spawn_x - player.rect.centerx) ** 2 + (spawn_y - player.rect.centery) ** 2) ** 0.5
-                    if distance_to_player > ENEMY_SPAWN_RADIUS:
-                        break
-
-                if random.choice([True, False]):
-                    new_enemy = Enemy(spawn_x, spawn_y, gravity_manager)
-                    current_level.enemies.add(new_enemy)
-                else:
-                    new_enemy = EnemyType2(spawn_x, spawn_y, gravity_manager)
-                    current_level.enemies_type2.add(new_enemy)
-                all_sprites.add(new_enemy)
+        if is_boss_level_active and victory:
+            show_victory_screen()
+            reset_game(start_from_boss=False)
+            show_countdown()
+            continue
 
         # 화면 그리기
         screen.fill(settings.BLACK)
