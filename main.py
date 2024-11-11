@@ -214,7 +214,6 @@ def reset_game(start_from_boss=False):
     else:
         is_boss_level_active = False
 
-
 # 초기 게임 상태 설정
 reset_game()
 checkpoint_position = (900, 200)
@@ -494,12 +493,11 @@ try:
                     game_over = True
 
             # 보스의 투사체와 스타의 충돌 처리
-            projectile_star_hits = pygame.sprite.groupcollide(
-                current_level.boss.projectiles,
-                current_level.stars,
-                True,  # 투사체는 제거
-                False  # 스타는 제거하지 않음
-            )
+            # 스타가 보스의 투사체와 충돌 시 스타 제거
+            for projectile in current_level.boss.projectiles:
+                star_hits = pygame.sprite.spritecollide(projectile, current_level.stars, True)
+                if star_hits:
+                    projectile.kill()
 
             # 보스와 스타의 충돌 처리
             boss_star_hits = pygame.sprite.spritecollide(
@@ -570,6 +568,16 @@ try:
 
         # 스타 스프라이트 업데이트 (중력 방향에 따라 이동)
         current_level.stars.update()
+
+        # 스타와 플랫폼 충돌 처리
+        for star in current_level.stars:
+            # 스타가 플랫폼과 충돌하면 제거
+            if pygame.sprite.spritecollideany(star, current_level.platforms):
+                star.kill()
+            # 스타가 보스와 충돌하면 데미지를 주고 제거
+            if is_boss_level_active and current_level.boss and pygame.sprite.collide_rect(star, current_level.boss):
+                current_level.boss.take_damage(10)  # 원하는 데미지 설정
+                star.kill()
 
         if is_boss_level_active and victory:
             show_victory_screen()
